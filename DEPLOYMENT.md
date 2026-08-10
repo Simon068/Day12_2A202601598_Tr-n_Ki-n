@@ -10,17 +10,17 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Họ và tên | (điền họ tên) |
-| Mã học viên | (điền mã học viên) |
-| Repo | (điền link repo K4-DAY12-...) |
+| Họ và tên | Trần Kiên |
+| Mã học viên | 2A202601598 |
+| Repo | Chưa có URL public — cần tạo/push repository theo quy tắc K4-DAY12-2A202601598-TranKien |
 
 ## Service
 
 | Mục | Nội dung |
 |-----|----------|
-| Public URL | https://TODO-thay-bang-url-that.up.railway.app |
-| Platform | Railway / Render / Cloud Run — (điền platform bạn dùng) |
-| Ngày deploy | (điền ngày) |
+| Public URL | Không có URL public; đang dùng local fallback tại `http://localhost:8000` |
+| Platform | Docker Compose local fallback; chưa deploy Railway |
+| Ngày deploy | 2026-08-10 |
 
 ## Biến Môi Trường Đã Set Trên Cloud
 
@@ -30,7 +30,7 @@ Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
 |------|--------|---------|
 | `PORT` | ✅ | platform tự gán |
 | `API_TOKEN` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | (điền: Redis add-on của platform / Upstash / ...) |
+| `REDIS_URL` | ✅ | `redis://redis:6379/0` trong mạng Docker Compose |
 | `BUCKET_CAPACITY` | ✅ | 10 |
 | `REFILL_PER_MINUTE` | ✅ | 10 |
 | `DAILY_BUDGET_USD` | ✅ | 1.0 |
@@ -38,22 +38,22 @@ Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
 
 ## Lệnh Kiểm Tra
 
-Thay `<URL>` bằng Public URL ở trên:
+Với local fallback, dùng `http://localhost:8000`:
 
 ```bash
 # 1. Liveness — mong đợi 200 {"status":"ok"}
-curl -i <URL>/healthz
+curl -i http://localhost:8000/healthz
 
 # 2. Readiness — mong đợi 200 {"status":"ready"} (đã nối được Redis)
-curl -i <URL>/readyz
+curl -i http://localhost:8000/readyz
 
 # 3. Không có token — mong đợi 401 kèm header WWW-Authenticate
-curl -i -X POST <URL>/chat \
+curl -i -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"message":"Hello"}'
 
 # 4. Có token — mong đợi 200 kèm câu trả lời
-curl -i -X POST <URL>/chat \
+curl -i -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $API_TOKEN" \
   -H "X-Client-Id: sv-test" \
@@ -61,7 +61,7 @@ curl -i -X POST <URL>/chat \
 
 # 5. Rate limit — gọi 15 lần, những lần cuối phải trả 429
 for i in $(seq 1 15); do
-  curl -s -o /dev/null -w "%{http_code} " -X POST <URL>/chat \
+  curl -s -o /dev/null -w "%{http_code} " -X POST http://localhost:8000/chat \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $API_TOKEN" \
     -H "X-Client-Id: sv-test" \
@@ -71,15 +71,16 @@ done; echo
 
 ## Kết Quả Chạy Thật
 
-Dán output của các lệnh trên vào đây:
+Kết quả đã xác minh ở máy local:
 
 ```
-(điền output)
+GET /healthz  -> HTTP 200 {"status":"ok","service":"day12-chat-service","version":"1.0.0"}
+GET /readyz   -> HTTP 200 {"status":"ready","redis":true}
 ```
 
 ## Ảnh Chụp Màn Hình
 
-Đặt ảnh trong thư mục `screenshots/`:
+Ảnh xác minh local fallback được lưu trong thư mục `screenshots/` trước khi nộp:
 
 - `screenshots/dashboard.png` — trang quản lý service trên platform
 - `screenshots/healthz.png` — kết quả gọi `/healthz` từ trình duyệt hoặc curl
@@ -98,5 +99,7 @@ Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng
 5. Ghi rõ lý do không deploy được vào phần dưới đây:
 
 ```
-(điền lý do nếu dùng phương án dự phòng, ngược lại xóa mục này)
+Docker Desktop ban đầu không khởi động vì Windows thiếu WSL 2 và hỗ trợ ảo hóa.
+Sau khi cài WSL 2, stack đã chạy thành công bằng Docker Compose tại máy local.
+Chưa có tài khoản cloud và Redis managed để tạo URL HTTPS công khai.
 ```
